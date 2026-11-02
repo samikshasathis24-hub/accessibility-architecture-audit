@@ -1,0 +1,10 @@
+accessibility-architecture-audit/
+├── client/                 React + Vite UI
+│   └── src/                Components and styles
+├── server/                 FastAPI service
+│   └── app/                API application and routers
+├── docs/                   Audit and architecture documentation
+│   └── screenshots/        Original evidence
+└── tests/                  Regression tests
+    ├── client/
+    └── server/
