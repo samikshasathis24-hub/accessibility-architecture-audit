@@ -1,86 +1,185 @@
-# Accessibility Baseline & Repository Architecture Audit
+# AccessAudit – Accessibility Audit Platform
 
-Starter monorepo for an evidence-based audit of a public-facing service website. Proposed target: [Passport Seva](https://www.passportindia.gov.in/).
+AccessAudit is a responsive web application designed to help users identify, manage, and track website accessibility issues. It provides a centralized dashboard for recording findings, monitoring their status, and managing accessibility improvements.
 
-**Important:** Audit is NOT STARTED. Do not claim findings or scores until personally verified.
+## Live Application
 
-## Boundaries
-- `client/`: React UI, accessible interactions, presentation, client-side validation.
-- `server/`: FastAPI routes, request validation, business logic, future persistence.
-- `docs/`: audit evidence, findings, architecture decisions, screenshots.
-- `tests/`: API, UI, and accessibility regression tests.
+**Frontend:** https://accessibility-architecture-audit.vercel.app
 
-The client communicates with the server only through HTTP/JSON APIs. The server does not render or depend on React.
+**Backend API:** https://accessibility-architecture-audit.onrender.com
 
-## Architecture tree
-```text
-accessibility-architecture-audit/
-├── client/                 React + Vite frontend
-│   └── src/                UI components and styles
-├── server/                 FastAPI backend
-│   └── app/                API application and routes
-├── docs/                   Audit and architecture documentation
-│   └── screenshots/        Lighthouse and keyboard evidence
-└── tests/
-    ├── client/
-    └── server/
+**API Documentation:** https://accessibility-architecture-audit.onrender.com/docs
+
+## Features
+
+- **Simulated Authentication:** Demo login and logout functionality.
+- **Dashboard:** Overview of total, open, in-progress, and resolved findings.
+- **Create Findings:** Add accessibility issues with relevant details.
+- **Read Findings:** View all recorded accessibility findings.
+- **Update Findings:** Change the status of existing findings.
+- **Delete Findings:** Remove findings when they are no longer required.
+- **Search and Filtering:** Search findings and filter by status or severity.
+- **Sorting:** Organize findings for easier management.
+- **Persistent State:** Backend database storage with browser localStorage caching.
+- **Responsive Design:** Mobile-first interface that adapts to different screen sizes.
+- **Accessible Interface:** Semantic HTML, labeled form controls, and keyboard-friendly interactions.
+
+## Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | React.js, Vite, JavaScript |
+| Styling | CSS3, CSS Custom Properties |
+| Backend | Python, FastAPI |
+| Database | SQLite |
+| API | REST API, JSON |
+| Frontend Deployment | Vercel |
+| Backend Deployment | Render |
+| Version Control | Git, GitHub |
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A[User] --> B[React Frontend]
+    B --> C[Vercel Deployment]
+    C --> D[FastAPI REST API]
+    D --> E[SQLite Database]
+    D --> F[CRUD Operations]
+    F --> E
 ```
 
-## Windows setup (VS Code)
+## Demo Login Credentials
 
-Prerequisites: Node.js LTS, Python 3.11+, Git, Chrome.
+Use the following credentials to access the application:
 
-### Start backend
+- **Email:** admin@accessaudit.com
+- **Password:** admin123
+
+**Note:** Authentication is simulated for demonstration purposes. It is not intended for production security.
+
+## Local Installation and Setup
+
+### Prerequisites
+
+- Node.js and npm
+- Python 3.10 or later
+- Git
+
+### 1. Clone the Repository
+
+```powershell
+git clone https://github.com/samikshasathis24-hub/accessibility-architecture-audit.git
+
+cd accessibility-architecture-audit
+```
+
+### 2. Set Up the Backend
+
+Open a terminal:
+
 ```powershell
 cd server
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-py -m pip install -r requirements.txt
-py -m uvicorn app.main:app --reload --port 8000
+
+py -m venv venv
+
+.\venv\Scripts\Activate.ps1
+
+pip install -r requirements.txt
+
+uvicorn app.main:app --reload
 ```
-API: http://127.0.0.1:8000/health ; docs: http://127.0.0.1:8000/docs
 
-If PowerShell blocks activation, run:
-`Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+Backend runs locally on port `8000`.
 
-### Start frontend (second terminal)
+### 3. Set Up the Frontend
+
+Open a second terminal:
+
 ```powershell
 cd client
+
 npm install
+```
+
+Create a `.env` file inside the `client` folder:
+
+```env
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+Start the frontend:
+
+```powershell
 npm run dev
 ```
-Open the localhost URL printed by Vite (usually http://localhost:5173).
 
-## First vertical feature slice
-1. React loads and requests `GET /health`.
-2. FastAPI returns `{"status":"ok"}`.
-3. React displays the result in an accessible live status region.
-4. `tests/server/test_health.py` verifies the API response.
+Open the local development address displayed in the terminal.
 
-## Audit workflow
-1. Open Passport Seva and record the exact URL, date, browser, and viewport.
-2. Chrome DevTools → Lighthouse → Accessibility → Generate report.
-3. Save screenshots under `docs/screenshots/`.
-4. Navigate using only Tab, Shift+Tab, Enter, Space, and arrow keys as appropriate.
-5. Manually reproduce and verify each candidate issue. Lighthouse results are leads, not automatic proof of WCAG failure.
-6. Document five verified findings in `docs/accessibility-audit.csv` and explain them in `docs/accessibility-audit.md`.
+## API Endpoints
 
-## Run API tests
-```powershell
-cd server
-py -m pip install -r requirements.txt
-py -m pytest ../tests/server -q
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Check backend health |
+| GET | `/findings` | Retrieve all findings |
+| POST | `/findings` | Create a new finding |
+| PUT | `/findings/{id}` | Update a finding |
+| DELETE | `/findings/{id}` | Delete a finding |
+
+## Deployment
+
+The application is deployed using separate frontend and backend services.
+
+**Frontend – Vercel**
+- Root directory: `client`
+- Framework: Vite
+- Environment variable: `VITE_API_URL`
+
+**Backend – Render**
+- Root directory: `server`
+- Build command: `pip install -r requirements.txt`
+- Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+The backend uses the `CORS_ORIGINS` environment variable to allow frontend communication.
+
+## Project Structure
+
+```text
+accessibility-architecture-audit/
+│
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   │   └── Login.jsx
+│   │   ├── api.js
+│   │   ├── App.jsx
+│   │   └── App.css
+│   ├── .env.example
+│   └── package.json
+│
+├── server/
+│   ├── app/
+│   │   └── main.py
+│   └── requirements.txt
+│
+├── docs/
+├── tests/
+└── README.md
 ```
 
-Frontend test runner is not configured yet; see `tests/client/README.md`.
+## Important Note
 
-## Publish to GitHub
-```powershell
-git init
-git add .
-git commit -m "Create accessibility audit project foundation"
-git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/accessibility-architecture-audit.git
-git push -u origin main
-```
-Replace the remote with your own repository URL. Never commit credentials or `.env` files.
+The deployed application uses SQLite on the Render free service. Since its filesystem is not persistent by default, database records may be lost when the service restarts or is redeployed. A persistent database can be configured in a future enhancement.
+
+## Future Enhancements
+
+- Secure authentication and role-based access.
+- Persistent cloud database integration.
+- Accessibility report generation.
+- Advanced analytics and reporting.
+- Automated accessibility testing integration.
+
+## Conclusion
+
+AccessAudit demonstrates the development and deployment of a full-stack web application using React, FastAPI, and SQLite. It brings together responsive frontend development, RESTful API integration, CRUD functionality, and cloud deployment in one project.
