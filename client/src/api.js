@@ -1,4 +1,5 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const CACHE_KEY = "accessaudit_findings";
 
@@ -54,6 +55,8 @@ export async function getFindings() {
     saveToCache(findings);
     return findings;
   } catch (error) {
+    console.error("API request failed:", error);
+
     const cached = getFromCache();
 
     if (Array.isArray(cached)) {

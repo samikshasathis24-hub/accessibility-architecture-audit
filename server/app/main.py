@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 
@@ -11,18 +12,34 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Frontend URLs allowed to access the API
+cors_origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173",
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
+        origin.strip()
+        for origin in cors_origins.split(",")
+        if origin.strip()
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-DATABASE = Path(__file__).resolve().parent.parent / "audit.db"
+# Use Render's persistent disk when DATABASE_PATH is configured.
+# Otherwise, use the local database during development.
+DATABASE = Path(
+    os.getenv(
+        "DATABASE_PATH",
+        str(Path(__file__).resolve().parent.parent / "audit.db"),
+    )
+)
+
+DATABASE.parent.mkdir(parents=True, exist_ok=True)
 
 
 def get_connection():
@@ -103,12 +120,14 @@ def create_finding(finding: Finding):
     connection.commit()
     finding_id = cursor.lastrowid
     connection.close()
+
     return {"message": "Finding created", "id": finding_id}
 
 
 @app.put("/findings/{finding_id}")
 def update_finding(finding_id: int, finding: FindingUpdate):
     allowed_statuses = ["Open", "In Progress", "Resolved"]
+
     if finding.status not in allowed_statuses:
         raise HTTPException(status_code=400, detail="Invalid status")
 
@@ -122,6 +141,7 @@ def update_finding(finding_id: int, finding: FindingUpdate):
 
     if cursor.rowcount == 0:
         raise HTTPException(status_code=404, detail="Finding not found")
+
     return {"message": "Finding updated"}
 
 
@@ -137,4 +157,5 @@ def delete_finding(finding_id: int):
 
     if cursor.rowcount == 0:
         raise HTTPException(status_code=404, detail="Finding not found")
+
     return {"message": "Finding deleted"}

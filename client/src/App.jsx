@@ -8,6 +8,7 @@ import ConfirmDialog from "./components/ConfirmDialog";
 import Dashboard from "./pages/Dashboard";
 import AddFinding from "./pages/AddFinding";
 import AuditFindings from "./pages/AuditFindings";
+import Login from "./pages/Login";
 
 import {
   getFindings,
@@ -28,6 +29,14 @@ const emptyForm = {
 };
 
 function App() {
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("accessaudit_user")) || null;
+    } catch {
+      return null;
+    }
+  });
+
   const [findings, setFindings] = useState([]);
   const [form, setForm] = useState(emptyForm);
 
@@ -39,7 +48,28 @@ function App() {
 
   const [deleteId, setDeleteId] = useState(null);
 
-  // Load findings from API
+  // Login
+  function handleLogin(userData) {
+    sessionStorage.setItem(
+      "accessaudit_user",
+      JSON.stringify(userData)
+    );
+
+    setUser(userData);
+  }
+
+  // Logout
+  function handleLogout() {
+    sessionStorage.removeItem("accessaudit_user");
+
+    setUser(null);
+    setFindings([]);
+    setForm(emptyForm);
+    setError("");
+    setSuccess("");
+  }
+
+  // Load findings
   async function loadFindings() {
     setLoading(true);
     setError("");
@@ -54,31 +84,27 @@ function App() {
     }
   }
 
-  // Load findings when application starts
   useEffect(() => {
-    loadFindings();
-  }, []);
+    if (user) {
+      loadFindings();
+    }
+  }, [user]);
 
-  // Calculate dashboard statistics
-  const counts = useMemo(() => {
-    return {
-      total: findings.length,
+  // Dashboard statistics
+  const counts = useMemo(() => ({
+    total: findings.length,
+    open: findings.filter(
+      (item) => item.status === "Open"
+    ).length,
+    progress: findings.filter(
+      (item) => item.status === "In Progress"
+    ).length,
+    resolved: findings.filter(
+      (item) => item.status === "Resolved"
+    ).length,
+  }), [findings]);
 
-      open: findings.filter(
-        (item) => item.status === "Open"
-      ).length,
-
-      progress: findings.filter(
-        (item) => item.status === "In Progress"
-      ).length,
-
-      resolved: findings.filter(
-        (item) => item.status === "Resolved"
-      ).length,
-    };
-  }, [findings]);
-
-  // Update form fields
+  // Form updates
   function updateForm(event) {
     const { name, value } = event.target;
 
@@ -88,7 +114,7 @@ function App() {
     }));
   }
 
-  // Add a new finding
+  // Add finding
   async function addFinding(event) {
     event.preventDefault();
 
@@ -110,7 +136,7 @@ function App() {
     }
   }
 
-  // Update finding status
+  // Update status
   async function changeStatus(id, status) {
     setError("");
     setSuccess("");
@@ -119,14 +145,13 @@ function App() {
       await updateFinding(id, status);
 
       setSuccess("Finding status updated.");
-
       await loadFindings();
     } catch (err) {
       setError(err.message);
     }
   }
 
-  // Delete a finding
+  // Delete finding
   async function removeFinding() {
     if (deleteId === null) return;
 
@@ -146,9 +171,13 @@ function App() {
     }
   }
 
+  // Show login page if user is not logged in
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className="app-shell">
-
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
@@ -156,7 +185,6 @@ function App() {
       <Header />
 
       <div className="dashboard-layout">
-
         <Sidebar />
 
         <main
@@ -164,19 +192,28 @@ function App() {
           className="main-content"
           tabIndex="-1"
         >
-
           <section
             className="welcome-section"
             aria-labelledby="welcome-heading"
           >
-            <h2 id="welcome-heading">
-              Welcome to your Audit Workspace
-            </h2>
+            <div>
+              <h2 id="welcome-heading">
+                Welcome, {user.name}
+              </h2>
 
-            <p>
-              Identify, document and resolve accessibility issues
-              across digital services.
-            </p>
+              <p>
+                Identify, document and resolve accessibility issues
+                across digital services.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="refresh"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
           </section>
 
           <Dashboard counts={counts} />
@@ -213,7 +250,6 @@ function App() {
             onDelete={setDeleteId}
             onRefresh={loadFindings}
           />
-
         </main>
       </div>
 
@@ -226,7 +262,6 @@ function App() {
         onConfirm={removeFinding}
         onCancel={() => setDeleteId(null)}
       />
-
     </div>
   );
 }
